@@ -6,8 +6,6 @@ import TelegramBot, {
 } from 'node-telegram-bot-api';
 import type { HyperAPITelegramRequest, RequestArgs } from './request.js';
 
-const REGEXP_START_COMMAND = /^\/start(\s+(.+)?)?$/;
-
 /**
  * Checks if given string is a valid path
  * @param path
@@ -30,6 +28,7 @@ export class HyperAPITelegramDriver extends HyperAPIDriver<
 	HyperAPITelegramRequest<RequestArgs>
 > {
 	private telegram: TelegramBot;
+	private username: string | undefined;
 
 	/**
 	 * @param options -
@@ -46,6 +45,35 @@ export class HyperAPITelegramDriver extends HyperAPIDriver<
 		this.telegram.on('callback_query', this.processCallbackQuery);
 
 		this.telegram.on('polling_error', this.catchPollingErrors);
+
+		this.init().catch((error) => {
+			// oxlint-disable-next-line no-console
+			console.error(`Failed to initialize Telegram Driver: ${error.message}`);
+			this.destroy();
+		});
+	}
+
+	private async init() {
+		try {
+			const me = await this.telegram.getMe();
+
+			if (!me.username) {
+				return;
+			}
+
+			this.username = me.username;
+
+			// oxlint-disable-next-line no-console
+			console.log(`Bot @${this.username} is running by HyperAPI.`);
+		} catch (error) {
+			if (error instanceof Error) {
+				throw new TypeError(
+					`Invalid token or connection error (${error.message})`,
+				);
+			}
+
+			throw error;
+		}
 	}
 
 	/**
@@ -54,8 +82,33 @@ export class HyperAPITelegramDriver extends HyperAPIDriver<
 	 */
 	private async processRequest(request: HyperAPITelegramRequest) {
 		try {
-			const hyperapi_response = await this.emitRequest(request);
-		} catch {}
+			await this.emitRequest(request);
+		} catch (error) {
+			if (
+				error instanceof Error
+				&& 'code' in error
+				&& error.code === 'ETELEGRAM'
+			) {
+				// ! FIX ME
+				const tgError = error as unknown;
+				const tgBody = tgError.response?.body;
+
+				if (tgBody && tgBody.description) {
+					// oxlint-disable-next-line no-console
+					console.error(
+						`Telegram API Error ${tgBody.error_code}: ${tgBody.description}`,
+					);
+				} else {
+					// oxlint-disable-next-line no-console
+					console.error(`Telegram API Error: ${error.message}`);
+				}
+			} else {
+				// oxlint-disable-next-line no-console
+				console.error('Unhandled error in HyperAPI Telegram Driver:');
+				// oxlint-disable-next-line no-console
+				console.error(error);
+			}
+		}
 	}
 
 	/**
@@ -63,7 +116,6 @@ export class HyperAPITelegramDriver extends HyperAPIDriver<
 	 * @param message - Message
 	 */
 	private processMessage(message: Message) {
-		console.log(message);
 		if (!message.text && !message.caption) {
 			return;
 		}
@@ -77,15 +129,6 @@ export class HyperAPITelegramDriver extends HyperAPIDriver<
 				type: 'message',
 				message,
 			},
-			sendMessage: (text, options) =>
-				// ! закинуть в очередь (которой еще нет)
-				this.telegram.sendMessage(message.chat.id, text, options),
-
-			editMessageText: (text, options) =>
-				this.telegram.editMessageText(text, {
-					chat_id: message.chat.id,
-					...options,
-				}),
 		} as HyperAPITelegramRequest;
 
 		let hyperapi_request: HyperAPITelegramRequest<RequestArgs>;
@@ -98,16 +141,21 @@ export class HyperAPITelegramDriver extends HyperAPIDriver<
 
 			if (entities && entities.length > 0) {
 				const command_entity = entities.find(
+					// ignoring all commands that start not in the beginning of a message
 					(entity) => entity.type === 'bot_command' && entity.offset === 0,
 				);
 
 				if (command_entity) {
-					command = text
+					const [_command, username] = text
 						.slice(
 							command_entity.offset,
 							command_entity.offset + command_entity.length,
 						)
-						.split('@')[0]; // removing bot username from commands like /start@some_bot
+						.split('@');
+
+					if (username === undefined || username === this.username) {
+						command = _command;
+					}
 				}
 			}
 		}
@@ -134,8 +182,6 @@ export class HyperAPITelegramDriver extends HyperAPIDriver<
 			};
 		}
 
-		// users.[id].callback.ts
-
 		this.processRequest(hyperapi_request);
 	}
 
@@ -154,14 +200,6 @@ export class HyperAPITelegramDriver extends HyperAPIDriver<
 				type: 'callback_query',
 				query,
 			},
-			sendMessage: (text, options) =>
-				this.telegram.sendMessage(message.chat.id, text, options),
-
-			editMessageText: (text, options) =>
-				this.telegram.editMessageText(text, {
-					chat_id: message.chat.id,
-					...options,
-				}),
 		} as HyperAPITelegramRequest;
 	}
 
@@ -174,7 +212,9 @@ export class HyperAPITelegramDriver extends HyperAPIDriver<
 
 	/** Stops the server. */
 	override destroy(): void {
-		this.telegram.stopPolling();
+		if (this.telegram.isPolling()) {
+			this.telegram.stopPolling();
+		}
 
 		super.destroy();
 	}
