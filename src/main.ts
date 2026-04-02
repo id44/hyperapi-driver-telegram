@@ -34,7 +34,6 @@ export class HyperAPITelegramDriver extends HyperAPIDriver<
 			console.error(
 				`HyperAPI failed to initialize Telegram driver: ${error.message}`,
 			);
-			this.destroy();
 		});
 	}
 
@@ -57,8 +56,8 @@ export class HyperAPITelegramDriver extends HyperAPIDriver<
 				await validate_path_map(this.path_map);
 			}
 
-			this.telegram.on('message', this.processMessage);
-			this.telegram.on('callback_query', this.processCallbackQuery);
+			this.telegram.on('message', this.processMessage.bind(this));
+			this.telegram.on('callback_query', this.processCallbackQuery.bind(this));
 
 			this.telegram.on('polling_error', () => {
 				/* do nothing */
@@ -104,14 +103,14 @@ export class HyperAPITelegramDriver extends HyperAPIDriver<
 		}
 	}
 
-	private processMessage(message: TelegramBot.Message) {
+	private async processMessage(message: TelegramBot.Message) {
 		const request = handleMessage(message, {
 			bot: this.telegram,
 			username: this.username,
 		});
 
 		if (request) {
-			this.processRequest(request);
+			await this.processRequest(request);
 		}
 	}
 

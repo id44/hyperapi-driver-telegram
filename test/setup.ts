@@ -14,12 +14,9 @@ const env = v.parse(
 
 export const hyperApi = new HyperAPI(
 	new HyperAPITelegramDriver({
-		telegram_client: new TelegramBot(
-			env.TG_DRIVER_TEST_TELEGRAM_BOT_TOKEN + '1',
-			{
-				polling: true,
-			},
-		),
+		telegram_client: new TelegramBot(env.TG_DRIVER_TEST_TELEGRAM_BOT_TOKEN, {
+			polling: true,
+		}),
 		path_map: {
 			t: 'test',
 			m: 'ss',

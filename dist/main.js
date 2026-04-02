@@ -471,7 +471,6 @@ var HyperAPITelegramDriver = class extends HyperAPIDriver {
 		this.path_map = path_map;
 		this.init().catch((error) => {
 			console.error(`HyperAPI failed to initialize Telegram driver: ${error.message}`);
-			this.destroy();
 		});
 	}
 	async init() {
@@ -481,8 +480,8 @@ var HyperAPITelegramDriver = class extends HyperAPIDriver {
 			if (!username) throw new Error("Bot does not have username.");
 			this.username = username;
 			if (this.path_map) await validate_path_map(this.path_map);
-			this.telegram.on("message", this.processMessage);
-			this.telegram.on("callback_query", this.processCallbackQuery);
+			this.telegram.on("message", this.processMessage.bind(this));
+			this.telegram.on("callback_query", this.processCallbackQuery.bind(this));
 			this.telegram.on("polling_error", () => {});
 			console.log(`Bot @${this.username} is running by HyperAPI.`);
 		} catch (error) {
@@ -508,12 +507,12 @@ var HyperAPITelegramDriver = class extends HyperAPIDriver {
 			}
 		}
 	}
-	processMessage(message) {
+	async processMessage(message) {
 		const request = handleMessage(message, {
 			bot: this.telegram,
 			username: this.username
 		});
-		if (request) this.processRequest(request);
+		if (request) await this.processRequest(request);
 	}
 	processCallbackQuery(query) {
 		const request = handleCallbackQuery(query, {
