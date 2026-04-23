@@ -124,3 +124,9 @@ export class HyperAPITelegramDriver extends HyperAPIDriver<
 		}
 	}
 }
+
+export type {
+	HyperAPITelegramRequest,
+	RequestArgs,
+	TelegramUpdateData,
+} from './request.js';

@@ -8,7 +8,11 @@ import TelegramBot from 'node-telegram-bot-api';
 export type RequestArgs = Record<string, unknown>;
 
 export type TelegramUpdateData =
-	| { type: 'message'; message: TelegramBot.Message; query?: never }
+	| {
+			type: 'message';
+			message: TelegramBot.Message;
+			query?: never;
+	  }
 	| {
 			type: 'callback_query';
 			query: TelegramBot.CallbackQuery;
