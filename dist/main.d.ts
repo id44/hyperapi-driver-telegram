@@ -55,4 +55,4 @@ declare class HyperAPITelegramDriver extends HyperAPIDriver<HyperAPITelegramRequ
   private processCallbackQuery;
 }
 //#endregion
-export { HyperAPITelegramDriver };
+export { HyperAPITelegramDriver, type HyperAPITelegramRequest, type RequestArgs, type TelegramUpdateData };
