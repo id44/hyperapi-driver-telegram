@@ -34,7 +34,7 @@ export function handleCallbackQuery(
 	}
 
 	return {
-		method: 'UNKNOWN',
+		method: 'UNDEF',
 		bot,
 		from: query.from,
 		chat: query.message?.chat,

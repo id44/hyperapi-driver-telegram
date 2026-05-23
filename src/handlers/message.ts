@@ -27,7 +27,7 @@ export function handleMessage(
 	const text = message.text || message.caption || '';
 
 	const base = {
-		method: 'UNKNOWN',
+		method: 'UNDEF',
 		bot,
 		from: message.from,
 		chat: message.chat,
