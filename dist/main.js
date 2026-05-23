@@ -45,7 +45,7 @@ function handleCallbackQuery(query, { bot, path_map = {} }) {
 	const parsed = parseCallbackData(data, path_map);
 	if (!parsed) return;
 	return {
-		method: "UNKNOWN",
+		method: "UNDEF",
 		bot,
 		from: query.from,
 		chat: query.message?.chat,
@@ -92,7 +92,7 @@ function handleMessage(message, { bot, username }) {
 	if (message.text === void 0 && message.caption === void 0) return;
 	const text = message.text || message.caption || "";
 	const base = {
-		method: "UNKNOWN",
+		method: "UNDEF",
 		bot,
 		from: message.from,
 		chat: message.chat,
