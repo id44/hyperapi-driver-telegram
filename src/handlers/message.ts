@@ -38,7 +38,7 @@ export function handleMessage(
 	} as HyperAPITelegramRequest;
 
 	const parsed = parseCommand({
-		entities: message.entities,
+		entities: message.entities || message.caption_entities,
 		text,
 		username,
 	});
