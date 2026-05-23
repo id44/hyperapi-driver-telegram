@@ -17,7 +17,7 @@ This driver connects your HyperAPI application to Telegram using the `node-teleg
 
 ```bash
 bun i @hyperapi/core node-telegram-bot-api
-bun add @hyperapi/driver-telegram@github:id44/hyperapi-driver-telegram#ab1cff62b6af60d45887550414c30f57d7fad78e
+bun add @hyperapi/driver-telegram@github:id44/hyperapi-driver-telegram#9a950fbb73c09069d3d73e40d02391a063a2505d
 ```
 
 ## Quick Start
